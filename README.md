@@ -7,7 +7,7 @@ Julia macros for suppressing output (STDOUT), warnings (STDERR) or both streams 
 ## Installation
 
 ```julia
-julia> Pkg.add("Suppressor.jl")
+julia> Pkg.add("Suppressor")
 ```
 
 ## Usage
