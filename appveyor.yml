@@ -31,4 +31,4 @@ build_script:
       Pkg.clone(pwd(), \"Suppressor\"); Pkg.build(\"Suppressor\")"
 
 test_script:
-  - C:\projects\julia\bin\julia -e "Pkg.test(\"Suppressor\")"
+  - C:\projects\julia\bin\julia --color=yes -e "Pkg.test(\"Suppressor\")"
