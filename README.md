@@ -2,7 +2,7 @@
 
 [![Travis](https://travis-ci.org/Ismael-VC/Suppressor.jl.svg?branch=master)](https://travis-ci.org/Ismael-VC/Suppressor.jl) [![AppVeyor](https://ci.appveyor.com/api/projects/status/e93wedour6lrdpj7/branch/master?svg=true)](https://ci.appveyor.com/project/Ismael-VC/suppressor-jl/branch/master) [![Coveralls](https://coveralls.io/repos/github/Ismael-VC/Suppressor.jl/badge.svg?branch=master)](https://coveralls.io/github/Ismael-VC/Suppressor.jl?branch=master) [![Codecov](http://codecov.io/github/Ismael-VC/Suppressor.jl/coverage.svg?branch=master)](http://codecov.io/github/Ismael-VC/Suppressor.jl?branch=master)
 
-Julia macros for suppressing output (STDOUT), warnings (STDERR) or both streams at the same time.
+Julia macros for suppressing and/or capturing output (STDOUT), warnings (STDERR) or both streams at the same time.
 
 ## Installation
 
@@ -47,5 +47,25 @@ ErrorException                                          Stacktrace (most recent 
 
 Remember that errors are still printed!
 
-julia>
 ```
+
+The `suppress` macros return whatever the given expression returns, but Suppressor also provides `@capture_out` and `@capture_err` macros that work similiarly to their `@suppress_` cousins except they return any output as a string:
+
+```julia
+julia> output = @capture_out begin
+    println("should get captured, not printed")
+end;
+
+julia> output == "should get captured, not printed\n"
+true
+
+julia> output = @capture_err begin
+    warn("should get captured, not printed")
+end;
+
+julia> output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
+true
+
+```
+
+Note that in this case the warning is printed with the escape characters to set the color because color is enabled at the REPL.
