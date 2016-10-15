@@ -18,13 +18,11 @@ macro suppress(block)
 
             value = $(esc(block))
 
-            @async wait(out_reader)
-            REDIRECTED_STDOUT = STDOUT
-            out_stream =redirect_stdout(ORIGINAL_STDOUT)
+            redirect_stdout(ORIGINAL_STDOUT)
+            close(out_wr)
 
-            @async wait(err_reader)
-            REDIRECTED_STDERR = STDERR
-            err_stream = redirect_stderr(ORIGINAL_STDERR)
+            redirect_stderr(ORIGINAL_STDERR)
+            close(err_wr)
 
             return value
         end
@@ -40,9 +38,8 @@ macro suppress_out(block)
 
             value = $(esc(block))
 
-            @async wait(out_reader)
-            REDIRECTED_STDOUT = STDOUT
-            out_stream = redirect_stdout(ORIGINAL_STDOUT)
+            redirect_stdout(ORIGINAL_STDOUT)
+            close(out_wr)
 
             return value
         end
@@ -58,9 +55,8 @@ macro suppress_err(block)
 
             value = $(esc(block))
 
-            @async wait(err_reader)
-            REDIRECTED_STDERR = STDERR
-            err_stream = redirect_stderr(ORIGINAL_STDERR)
+            redirect_stderr(ORIGINAL_STDERR)
+            close(err_wr)
 
             return value
         end
@@ -76,8 +72,7 @@ macro capture_out(block)
 
             $(esc(block))
 
-            REDIRECTED_STDOUT = STDOUT
-            out_stream = redirect_stdout(ORIGINAL_STDOUT)
+            redirect_stdout(ORIGINAL_STDOUT)
             close(out_wr)
 
             wait(out_reader)
@@ -94,8 +89,7 @@ macro capture_err(block)
 
             $(esc(block))
 
-            REDIRECTED_STDERR = STDERR
-            err_stream = redirect_stderr(ORIGINAL_STDERR)
+            redirect_stderr(ORIGINAL_STDERR)
             close(err_wr)
 
             wait(err_reader)
