@@ -9,7 +9,7 @@ end
 output = @capture_err begin
     warn("should get captured, not printed")
 end
-@test output == "WARNING: should get captured, not printed\n"
+@test output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
 
 @suppress begin
     println("This string doesn't get printed!")
