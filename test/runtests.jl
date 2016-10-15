@@ -1,6 +1,16 @@
 using Suppressor
 using Base.Test
 
+output = @capture_out begin
+    println("should get captured, not printed")
+end
+@test output == "should get captured, not printed\n"
+
+output = @capture_err begin
+    warn("should get captured, not printed")
+end
+@test output == "WARNING: should get captured, not printed\n"
+
 @suppress begin
     println("This string doesn't get printed!")
     warn("This warning is ignored.")
