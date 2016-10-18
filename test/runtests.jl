@@ -9,7 +9,8 @@ end
 output = @capture_err begin
     warn("should get captured, not printed")
 end
-@test output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
+@test output == Base.have_color ? "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n" : 
+                                  "WARNING: should get captured, not printed\n
 
 @suppress begin
     println("This string doesn't get printed!")
