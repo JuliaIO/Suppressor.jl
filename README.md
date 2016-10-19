@@ -63,7 +63,8 @@ julia> output = @capture_err begin
     warn("should get captured, not printed")
 end;
 
-julia> output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
+julia> output == (Base.have_color ? "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n" :
+                                    "WARNING: should get captured, not printed\n")
 true
 
 ```
