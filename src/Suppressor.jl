@@ -1,6 +1,7 @@
 __precompile__()
 
 module Suppressor
+using Compat
 
 export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
