@@ -14,21 +14,25 @@ output = @capture_err begin
 end
 @test output == "WARNING: should get captured, not printed\n"
 
-@suppress begin
+@test @suppress begin
     println("This string doesn't get printed!")
     warn("This warning is ignored.")
-end
+    42
+end == 42
 
-@suppress_out begin
+@test @suppress_out begin
     println("This string doesn't get printed!")
     warn("This warning is important")
-end
+    42
+end == 42
 # WARNING: This warning is important
 
-@suppress_err begin
+@test @suppress_err begin
     println("This string gets printed!")
     warn("This warning is unimportant")
-end
+    42
+end == 42
+
 # This string gets printed!
 
 @test_throws ErrorException @suppress begin
