@@ -88,6 +88,6 @@ function f5()
     42
 end
 
-@test f4() == 42
+@test f5() == 42
 
 use_color(HAVE_COLOR)
