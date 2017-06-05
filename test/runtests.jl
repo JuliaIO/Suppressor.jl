@@ -2,7 +2,8 @@ using Suppressor
 using Base.Test
 
 # make sure color is off to simplify testing for output
-eval(Base, :(have_color = false))
+use_color(enable::Bool = true) = eval(Base, :(have_color = $enable))
+use_color(false)
 
 output = @capture_out begin
     println("should get captured, not printed")
@@ -87,3 +88,5 @@ function f5()
 end
 
 @test f4() == 42
+
+use_color(true)
