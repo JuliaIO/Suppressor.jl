@@ -2,6 +2,7 @@ using Suppressor
 using Base.Test
 
 # make sure color is off to simplify testing for output
+const HAVE_COLOR = Base.have_color
 use_color(enable::Bool = true) = eval(Base, :(have_color = $enable))
 use_color(false)
 
@@ -89,4 +90,4 @@ end
 
 @test f4() == 42
 
-use_color(true)
+use_color(HAVE_COLOR)
