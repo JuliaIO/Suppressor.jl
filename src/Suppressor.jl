@@ -7,6 +7,11 @@ export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
 export @color_output
 
+"""
+    @suppress expr
+
+Suppress the STDOUT and STDERR streams for the given expression.
+"""
 macro suppress(block)
     quote
         if ccall(:jl_generating_output, Cint, ()) == 0
@@ -32,6 +37,11 @@ macro suppress(block)
     end
 end
 
+"""
+    @suppress_out expr
+
+Suppress the STDOUT stream for the given expression.
+"""
 macro suppress_out(block)
     quote
         if ccall(:jl_generating_output, Cint, ()) == 0
@@ -50,6 +60,11 @@ macro suppress_out(block)
     end
 end
 
+"""
+    @suppress_err expr
+
+Suppress the STDERR stream for the given expression.
+"""
 macro suppress_err(block)
     quote
         if ccall(:jl_generating_output, Cint, ()) == 0
@@ -68,6 +83,12 @@ macro suppress_err(block)
     end
 end
 
+
+"""
+    @capture_out expr
+
+Capture the STDOUT stream for the given expression.
+"""
 macro capture_out(block)
     quote
         if ccall(:jl_generating_output, Cint, ()) == 0
@@ -89,6 +110,11 @@ macro capture_out(block)
     end
 end
 
+"""
+    @capture_err expr
+
+Capture the STDERR stream for the given expression.
+"""
 macro capture_err(block)
     quote
         if ccall(:jl_generating_output, Cint, ()) == 0
@@ -110,6 +136,21 @@ macro capture_err(block)
     end
 end
 
+"""
+    @color_output enabled::Bool expr
+
+Enable or disable color printing for the given expression. Often useful in
+combination with the `@capture_*` macros:
+
+## Example
+
+@color_output false begin
+    output = @capture_err begin
+        warn("should get captured, not printed")
+    end
+end
+@test output == "WARNING: should get captured, not printed\n"
+"""
 macro color_output(enabled, block)
     quote
         prev_color = Base.have_color

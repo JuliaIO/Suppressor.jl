@@ -69,4 +69,23 @@ true
 
 ```
 
-Note that in this case the warning is printed with the escape characters to set the color because color is enabled at the REPL.
+Often when capturing output for test purposes it's useful to control whether
+color is enabled or not, so that you can compare with or without the color
+escape characters regardless of whether the julia process has colors enabled or
+disabled globally. You can use the `@color_output` macro for this:
+
+```julia
+@color_output false begin
+    output = @capture_err begin
+        warn("should get captured, not printed")
+    end
+end
+@test output == "WARNING: should get captured, not printed\n"
+
+@color_output true begin
+    output = @capture_err begin
+        warn("should get captured, not printed")
+    end
+end
+@test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
+```
