@@ -151,7 +151,7 @@ combination with the `@capture_*` macros:
 end
 @test output == "WARNING: should get captured, not printed\n"
 """
-macro color_output(enabled, block)
+macro color_output(enabled::Bool, block)
     quote
         prev_color = Base.have_color
         eval(Base, :(have_color = $$enabled))
