@@ -5,6 +5,7 @@ using Compat
 
 export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
+export @color_output
 
 macro suppress(block)
     quote
@@ -106,6 +107,17 @@ macro capture_err(block)
         else
             ""
         end
+    end
+end
+
+macro color_output(enabled, block)
+    quote
+        prev_color = Base.have_color
+        eval(Base, :(have_color = $$enabled))
+        retval = $(esc(block))
+        eval(Base, Expr(:(=), :have_color, prev_color))
+
+        retval
     end
 end
 
