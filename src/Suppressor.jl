@@ -11,11 +11,11 @@ macro suppress(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
-            out_reader = @async readstring(out_rd)
+            out_reader = @async read(out_rd, String)
 
             ORIGINAL_STDERR = STDERR
             err_rd, err_wr = redirect_stderr()
-            err_reader = @async readstring(err_rd)
+            err_reader = @async read(err_rd, String)
         end
 
         value = $(esc(block))
@@ -36,7 +36,7 @@ macro suppress_out(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
-            out_reader = @async readstring(out_rd)
+            out_reader = @async read(out_rd, String)
         end
 
         value = $(esc(block))
@@ -54,7 +54,7 @@ macro suppress_err(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             ORIGINAL_STDERR = STDERR
             err_rd, err_wr = redirect_stderr()
-            err_reader = @async readstring(err_rd)
+            err_reader = @async read(err_rd, String)
         end
 
         value = $(esc(block))
@@ -72,7 +72,7 @@ macro capture_out(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
-            out_reader = @async readstring(out_rd)
+            out_reader = @async read(out_rd, String)
         end
 
         $(esc(block))
@@ -93,7 +93,7 @@ macro capture_err(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             ORIGINAL_STDERR = STDERR
             err_rd, err_wr = redirect_stderr()
-            err_reader = @async readstring(err_rd)
+            err_reader = @async read(err_rd, String)
         end
 
         $(esc(block))
