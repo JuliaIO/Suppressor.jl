@@ -19,7 +19,12 @@ end
         warn("should get captured, not printed")
     end
 end
-@test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
+
+if VERSION >= v"0.6.0"
+    @test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
+else
+    @test output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
+end
 
 @test @suppress begin
     println("This string doesn't get printed!")
