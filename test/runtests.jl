@@ -1,20 +1,30 @@
 using Suppressor
 using Base.Test
 
-# make sure color is off to simplify testing for output
-const HAVE_COLOR = Base.have_color
-use_color(enable::Bool = true) = eval(Base, :(have_color = $enable))
-use_color(false)
-
 output = @capture_out begin
     println("should get captured, not printed")
 end
 @test output == "should get captured, not printed\n"
 
-output = @capture_err begin
-    warn("should get captured, not printed")
+# test both with and without color
+@color_output false begin
+    output = @capture_err begin
+        warn("should get captured, not printed")
+    end
 end
 @test output == "WARNING: should get captured, not printed\n"
+
+@color_output true begin
+    output = @capture_err begin
+        warn("should get captured, not printed")
+    end
+end
+
+if VERSION >= v"0.6.0"
+    @test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
+else
+    @test output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
+end
 
 @test @suppress begin
     println("This string doesn't get printed!")
@@ -89,5 +99,3 @@ function f5()
 end
 
 @test f5() == 42
-
-use_color(HAVE_COLOR)
