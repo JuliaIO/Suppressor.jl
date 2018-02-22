@@ -1,6 +1,8 @@
 using Suppressor
 using Base.Test
 
+@testset "Suppressor" begin
+
 output = @capture_out begin
     println("should get captured, not printed")
 end
@@ -50,19 +52,8 @@ end == 42
 @test_throws ErrorException @suppress begin
     println("This string doesn't get printed!")
     warn("This warning is ignored.")
-    error("Remember that errors are still printed!")
+    error("errors would normally get printed but are caught here by @test_throws")
 end
-#=
-------------------------------------------------------------------------------------------
-ErrorException                                          Stacktrace (most recent call last)
-[#2] — anonymous
-       ⌙ at <missing>:?
-
-[#1] — macro expansion;
-       ⌙ at Suppressor.jl:16 [inlined]
-
-Remember that errors are still printed!
-=#
 
 # test that the macros work inside a function
 function f1()
@@ -80,7 +71,7 @@ end
 @test f2() == 42
 
 function f3()
-    @suppress_err println("should not get printed")
+    @suppress_err println("should get printed")
     42
 end
 
@@ -94,8 +85,10 @@ end
 @test f4() == 42
 
 function f5()
-    @capture_err println("should not get printed")
+    @capture_err println("should get printed")
     42
 end
 
 @test f5() == 42
+
+end
