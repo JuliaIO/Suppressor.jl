@@ -1,6 +1,6 @@
 # Suppressor
 
-[![Travis](https://travis-ci.org/Ismael-VC/Suppressor.jl.svg?branch=master)](https://travis-ci.org/Ismael-VC/Suppressor.jl) [![AppVeyor](https://ci.appveyor.com/api/projects/status/e93wedour6lrdpj7/branch/master?svg=true)](https://ci.appveyor.com/project/Ismael-VC/suppressor-jl/branch/master) [![Coveralls](https://coveralls.io/repos/github/Ismael-VC/Suppressor.jl/badge.svg?branch=master)](https://coveralls.io/github/Ismael-VC/Suppressor.jl?branch=master) [![Codecov](http://codecov.io/github/Ismael-VC/Suppressor.jl/coverage.svg?branch=master)](http://codecov.io/github/Ismael-VC/Suppressor.jl?branch=master)
+[![Travis](https://travis-ci.org/JuliaIO/Suppressor.jl.svg?branch=master)](https://travis-ci.org/JuliaIO/Suppressor.jl) [![Build status](https://ci.appveyor.com/api/projects/status/e3uuqon84kt97402/branch/master?svg=true)](https://ci.appveyor.com/project/SalchiPapa/suppressor-jl/branch/master) [![CoverAlls](https://coveralls.io/repos/github/JuliaIO/Suppressor.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaIO/Suppressor.jl?branch=master) [![CodeCov](https://codecov.io/gh/JuliaIO/Suppressor.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaIO/Suppressor.jl)
 
 Julia macros for suppressing and/or capturing output (STDOUT), warnings (STDERR) or both streams at the same time.
 
