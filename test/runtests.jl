@@ -1,6 +1,7 @@
 using Suppressor
 using Base.Test
 
+
 @testset "Suppressor" begin
 
 output = @capture_out begin
@@ -91,4 +92,13 @@ end
 
 @test f5() == 42
 
-end
+@suppress_err Suppressor.eval(:(_jl_generating_output() = true))
+    
+@test @capture_out(println("should not get printed")) == ""
+@test @capture_err(warn("should not get printed")) == ""
+
+end # testset
+
+
+
+
