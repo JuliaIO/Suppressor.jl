@@ -7,6 +7,9 @@ export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
 export @color_output
 
+
+_jl_generating_output() = ccall(:jl_generating_output, Cint, ()) == 0 ? false : true
+
 """
     @suppress expr
 
@@ -14,7 +17,7 @@ Suppress the STDOUT and STDERR streams for the given expression.
 """
 macro suppress(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
             out_reader = @schedule read(out_rd, String)
@@ -27,7 +30,7 @@ macro suppress(block)
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if !($(_jl_generating_output()))
                 redirect_stdout(ORIGINAL_STDOUT)
                 close(out_wr)
 
@@ -45,7 +48,7 @@ Suppress the STDOUT stream for the given expression.
 """
 macro suppress_out(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
             out_reader = @schedule read(out_rd, String)
@@ -54,7 +57,7 @@ macro suppress_out(block)
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if !($(_jl_generating_output()))
                 redirect_stdout(ORIGINAL_STDOUT)
                 close(out_wr)
             end
@@ -69,7 +72,7 @@ Suppress the STDERR stream for the given expression.
 """
 macro suppress_err(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             ORIGINAL_STDERR = STDERR
             err_rd, err_wr = redirect_stderr()
             err_reader = @schedule read(err_rd, String)
@@ -78,7 +81,7 @@ macro suppress_err(block)
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if !($(_jl_generating_output()))
                 redirect_stderr(ORIGINAL_STDERR)
                 close(err_wr)
             end
@@ -94,7 +97,7 @@ Capture the STDOUT stream for the given expression.
 """
 macro capture_out(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             ORIGINAL_STDOUT = STDOUT
             out_rd, out_wr = redirect_stdout()
             out_reader = @schedule read(out_rd, String)
@@ -103,13 +106,13 @@ macro capture_out(block)
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if !($(_jl_generating_output()))
                 redirect_stdout(ORIGINAL_STDOUT)
                 close(out_wr)
             end
         end
 
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             wait(out_reader)
         else
             ""
@@ -124,7 +127,7 @@ Capture the STDERR stream for the given expression.
 """
 macro capture_err(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             ORIGINAL_STDERR = STDERR
             err_rd, err_wr = redirect_stderr()
             err_reader = @schedule read(err_rd, String)
@@ -133,13 +136,13 @@ macro capture_err(block)
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if !($(_jl_generating_output()))
                 redirect_stderr(ORIGINAL_STDERR)
                 close(err_wr)
             end
         end
 
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if !($(_jl_generating_output()))
             wait(err_reader)
         else
             ""

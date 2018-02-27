@@ -1,7 +1,8 @@
 using Suppressor
 using Base.Test
 
-@testset "Suppressor" begin
+
+# @testset "Suppressor" begin
 
 output = @capture_out begin
     println("should get captured, not printed")
@@ -60,35 +61,39 @@ function f1()
     @suppress println("should not get printed")
     42
 end
-
 @test f1() == 42
 
 function f2()
     @suppress_out println("should not get printed")
     42
 end
-
 @test f2() == 42
 
 function f3()
     @suppress_err println("should get printed")
     42
 end
-
 @test f3() == 42
 
 function f4()
     @capture_out println("should not get printed")
     42
 end
-
 @test f4() == 42
 
 function f5()
     @capture_err println("should get printed")
     42
 end
-
 @test f5() == 42
 
-end
+@suppress_err Suppressor.eval(:(_jl_generating_output() = true))
+    
+@test @capture_out(println("should get printed and return empty string")) == ""
+@test @capture_err(warn("should get printed and return empty string")) == ""
+
+# end # testset
+
+
+
+
