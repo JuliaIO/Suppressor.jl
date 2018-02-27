@@ -92,10 +92,12 @@ end
 
 @test f5() == 42
 
+@show Suppressor._jl_generating_output()
 @suppress_err Suppressor.eval(:(_jl_generating_output() = true))
+@show Suppressor._jl_generating_output()
     
-@test @capture_out(println("should not get printed")) == ""
-@test @capture_err(warn("should not get printed")) == ""
+@test @capture_out(println("should get printed and return empty string")) == ""
+@test @capture_err(warn("should get printed and return empty string")) == ""
 
 end # testset
 
