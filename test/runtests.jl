@@ -93,7 +93,7 @@ end
 @test f5() == 42
 
 @show Suppressor._jl_generating_output()
-@suppress_err Suppressor.eval(:(_jl_generating_output() = true))
+Suppressor.eval(:(_jl_generating_output() = true))
 @show Suppressor._jl_generating_output()
     
 @test @capture_out(println("should get printed and return empty string")) == ""
