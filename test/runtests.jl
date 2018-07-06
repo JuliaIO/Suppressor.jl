@@ -1,94 +1,150 @@
 using Suppressor
-using Base.Test
+using Compat.Test: @testset, @test, @test_throws
+using Compat: stderr, stdout
+using Compat: @info
+using Compat: printstyled
 
 @testset "Suppressor" begin
 
-output = @capture_out begin
-    println("should get captured, not printed")
-end
-@test output == "should get captured, not printed\n"
+# everything that prints to stdout and stderr should be prefixed with an
+# incrementing number so we can check that the output is as expected
 
-# test both with and without color
-@color_output false begin
+@testset "stdout capture" begin
+    output = @capture_out begin
+        println("CAPTURED STDOUT")
+        println(stderr, "01 PRINTED STDERR")
+    end
+    @test output == "CAPTURED STDOUT\n"
+    println("02 PRINTED STDOUT")
+end
+
+@testset "stderr capture" begin
     output = @capture_err begin
-        warn("should get captured, not printed")
+        println("03 PRINTED STDOUT")
+        println(stderr, "CAPTURED STDERR")
+    end
+    @test output == "CAPTURED STDERR\n"
+    println(stderr, "04 PRINTED STDERR")
+end
+
+# we're assuming the global context here has color enabled
+@testset "disabling color" begin
+    printstyled("05 PRINTED GREEN STDOUT\n", color=:green)
+    printstyled(stderr, "06 PRINTED GREEN STDERR\n", color=:green)
+
+    @color_output false begin
+        printstyled("07 PRINTED NORMAL STDOUT\n", color=:green)
+        printstyled(stderr, "08 PRINTED NORMAL STDERR\n", color=:green)
+    end
+
+    printstyled("09 PRINTED GREEN STDOUT\n", color=:green)
+    printstyled(stderr, "10 PRINTED GREEN STDERR\n", color=:green)
+end
+
+@testset "enabling color" begin
+    @color_output false begin
+        printstyled("11 PRINTED NORMAL STDOUT\n", color=:green)
+        printstyled(stderr, "12 PRINTED NORMAL STDERR\n", color=:green)
+
+        @color_output true begin
+            printstyled("13 PRINTED GREEN STDOUT\n", color=:green)
+            printstyled(stderr, "14 PRINTED GREEN STDERR\n", color=:green)
+        end
+
+        printstyled("15 PRINTED NORMAL STDOUT\n", color=:green)
+        printstyled(stderr, "16 PRINTED NORMAL STDERR\n", color=:green)
     end
 end
-@test output == "WARNING: should get captured, not printed\n"
 
-@color_output true begin
-    output = @capture_err begin
-        warn("should get captured, not printed")
+@testset "stdout suppression" begin
+    @test @suppress_out begin
+        println("SUPPRESSED STDOUT")
+        println(stderr, "17 PRINTED STDERR")
+        42
+    end == 42
+    println("18 PRINTED STDOUT")
+end
+
+@testset "stderr suppression" begin
+    @test @suppress_err begin
+        println("19 PRINTED STDOUT")
+        println(stderr, "SUPPRESSED STDERR")
+        42
+    end == 42
+    println(stderr, "20 PRINTED STDERR")
+end
+
+@testset "stderr and stdout suppression" begin
+    @test @suppress begin
+        println("SUPPRESSED STDOUT")
+        println(stderr, "SUPPRESSED STDERR")
+        42
+    end == 42
+    println("21 PRINTED STDOUT")
+    println(stderr, "22 PRINTED STDERR")
+end
+
+# make sure that things still work after an exception is thrown
+@testset "exception cleanup" begin
+    try
+        @capture_out throw(ErrorException(""))
+    catch
     end
+    println("23 PRINTED STDOUT")
+    println(stderr, "24 PRINTED STDERR")
+
+    try
+        @capture_err throw(ErrorException(""))
+    catch
+    end
+    println("25 PRINTED STDOUT")
+    println(stderr, "26 PRINTED STDERR")
+
+    try
+        @suppress throw(ErrorException(""))
+    catch
+    end
+    println("27 PRINTED STDOUT")
+    println(stderr, "28 PRINTED STDERR")
+
+    try
+        @suppress_out throw(ErrorException(""))
+    catch
+    end
+    println("29 PRINTED STDOUT")
+    println(stderr, "30 PRINTED STDERR")
+
+    try
+        @suppress_err throw(ErrorException(""))
+    catch
+    end
+    println("31 PRINTED STDOUT")
+    println(stderr, "32 PRINTED STDERR")
 end
-
-if VERSION >= v"0.6.0"
-    @test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
-else
-    @test output == "\e[1m\e[31mWARNING: should get captured, not printed\e[0m\n"
-end
-
-@test @suppress begin
-    println("This string doesn't get printed!")
-    warn("This warning is ignored.")
-    42
-end == 42
-
-@test @suppress_out begin
-    println("This string doesn't get printed!")
-    warn("This warning is important")
-    42
-end == 42
-# WARNING: This warning is important
-
-@test @suppress_err begin
-    println("This string gets printed!")
-    warn("This warning is unimportant")
-    42
-end == 42
-
-# This string gets printed!
 
 @test_throws ErrorException @suppress begin
-    println("This string doesn't get printed!")
-    warn("This warning is ignored.")
+    println("SUPPRESSED STDOUT")
+    println(stderr, "SUPPRESSED STDERR")
     error("errors would normally get printed but are caught here by @test_throws")
 end
 
-# test that the macros work inside a function
-function f1()
-    @suppress println("should not get printed")
-    42
+@testset "logging capture" begin
+    output = @capture_err @info "CAPTURED LOGINFO"
+    # 0.6.2 output:
+    if isdefined(Base, :CoreLogging)
+        @test output == "[ Info: CAPTURED LOGINFO\n"
+    else
+        @test output == "\e[1m\e[36mInfo: \e[39m\e[22m\e[36mCAPTURED LOGINFO\n\e[39m"
+    end
+    @info "33 PRINTED LOGINFO"
 end
 
-@test f1() == 42
+@testset "logging suppression" begin
+    @suppress_err @info "SUPPRESSED LOGINFO"
+    @info "34 PRINTED LOGINFO"
 
-function f2()
-    @suppress_out println("should not get printed")
-    42
+    @suppress @info "SUPPRESSED LOGINFO"
+    @info "35 PRINTED LOGINFO"
 end
 
-@test f2() == 42
-
-function f3()
-    @suppress_err println("should get printed")
-    42
-end
-
-@test f3() == 42
-
-function f4()
-    @capture_out println("should not get printed")
-    42
-end
-
-@test f4() == 42
-
-function f5()
-    @capture_err println("should get printed")
-    42
-end
-
-@test f5() == 42
-
-end
+end # @testset "Suppressor"
