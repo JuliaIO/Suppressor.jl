@@ -89,3 +89,13 @@ end
 end
 @test output == "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n"
 ```
+
+### Variable Scope
+
+The macros in Suppressor.jl need to wrap the given expression in a `try...finally` block to make sure that everything is cleaned up correctly. This means that any variables introduced within the macro expression aren't in-scope afterwards. To work around this you can use `local` to introduce the variable before the block, for example:
+
+```julia
+local x
+output = @capture_out x = loudfunction()
+println(x) # x is available here
+```
