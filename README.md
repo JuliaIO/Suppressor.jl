@@ -15,37 +15,32 @@ julia> Pkg.add("Suppressor")
 ```julia
 julia> using Suppressor
 
+julia> using Compat: @warn  # on 0.6
+
 julia> @suppress begin
            println("This string doesn't get printed!")
-           warn("This warning is ignored.")
+           @warn("This warning is ignored.")
        end
 
 julia> @suppress_out begin
            println("This string doesn't get printed!")
-           warn("This warning is important")
+           @warn("This warning is important")
        end
-WARNING: This warning is important
+┌ Warning: This warning is important
+└ @ Main REPL[4]:3
 
 julia> @suppress_err begin
            println("This string gets printed!")
-           warn("This warning is unimportant")
+           @warn("This warning is unimportant")
        end
 This string gets printed!
 
 julia> @suppress begin
            println("This string doesn't get printed!")
-           warn("This warning is ignored.")
+           @warn("This warning is ignored.")
            error("Remember that errors are still printed!")
        end
-------------------------------------------------------------------------------------------
-ErrorException                                          Stacktrace (most recent call last)
-[#2] — anonymous
-       ⌙ at <missing>:?
-
-[#1] — macro expansion;
-       ⌙ at Suppressor.jl:16 [inlined]
-
-Remember that errors are still printed!
+ERROR: Remember that errors are still printed!
 
 ```
 
@@ -60,14 +55,15 @@ julia> output == "should get captured, not printed\n"
 true
 
 julia> output = @capture_err begin
-    warn("should get captured, not printed")
+    @warn("should get captured, not printed")
 end;
 
-julia> output == (Base.have_color ? "\e[1m\e[33mWARNING: \e[39m\e[22m\e[33mshould get captured, not printed\e[39m\n" :
-                                    "WARNING: should get captured, not printed\n")
+julia> output[1:56] == "┌ Warning: should get captured, not printed\n└ @ Main"
 true
 
 ```
+
+*NOTE: the following example only works on Julia 0.6; on later versions of Julia the color codes are never captured*
 
 Often when capturing output for test purposes it's useful to control whether
 color is enabled or not, so that you can compare with or without the color
