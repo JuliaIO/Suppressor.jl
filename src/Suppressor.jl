@@ -216,8 +216,12 @@ macro color_output(enabled::Bool, block)
     quote
         prev_color = Base.have_color
         Core.eval(Base, :(have_color = $$enabled))
-        retval = $(esc(block))
-        Core.eval(Base, Expr(:(=), :have_color, prev_color))
+        local retval
+        try
+            retval = $(esc(block))
+        finally
+            Core.eval(Base, Expr(:(=), :have_color, prev_color))
+        end
 
         retval
     end
