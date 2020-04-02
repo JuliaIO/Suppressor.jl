@@ -1,8 +1,6 @@
+using Base: @info, printstyled, stderr, stdout
 using Suppressor
-using Compat.Test: @testset, @test, @test_throws
-using Compat: stderr, stdout
-using Compat: @info
-using Compat: printstyled
+using Test: @testset, @test, @test_throws
 
 @testset "Suppressor" begin
 
@@ -145,6 +143,19 @@ end
 
     @suppress @info "SUPPRESSED LOGINFO"
     @info "35 PRINTED LOGINFO"
+end
+
+@testset "color output exception handling" begin
+    @color_output true begin
+        try
+            @color_output false begin
+                throw(Exception())
+            end
+        catch
+        end
+        printstyled("36 PRINTED GREEN STDOUT\n", color=:green)
+        printstyled("37 PRINTED GREEN STDERR\n", color=:green)
+    end
 end
 
 end # @testset "Suppressor"

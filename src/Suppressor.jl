@@ -1,13 +1,10 @@
 __precompile__()
 
 module Suppressor
-using Compat
 
 export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
 export @color_output
-
-haslogging() = isdefined(Base, :CoreLogging)
 
 """
     @suppress expr
@@ -26,13 +23,11 @@ macro suppress(block)
             err_reader = @async read(err_rd, String)
 
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            if haslogging()
-                logstate = Base.CoreLogging._global_logstate
-                logger = logstate.logger
-                if logger.stream == original_stderr
-                    new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-                end
+            logstate = Base.CoreLogging._global_logstate
+            logger = logstate.logger
+            if logger.stream == original_stderr
+                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
+                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
         end
 
@@ -46,10 +41,8 @@ macro suppress(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if haslogging()
-                    if logger.stream == stderr
-                        Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                    end
+                if logger.stream == stderr
+                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
         end
@@ -93,13 +86,11 @@ macro suppress_err(block)
             err_reader = @async read(err_rd, String)
 
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            if haslogging()
-                logstate = Base.CoreLogging._global_logstate
-                logger = logstate.logger
-                if logger.stream == original_stderr
-                    new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-                end
+            logstate = Base.CoreLogging._global_logstate
+            logger = logstate.logger
+            if logger.stream == original_stderr
+                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
+                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
         end
 
@@ -110,10 +101,8 @@ macro suppress_err(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if haslogging()
-                    if logger.stream == stderr
-                        Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                    end
+                if logger.stream == stderr
+                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
         end
@@ -163,14 +152,12 @@ macro capture_err(block)
             err_rd, err_wr = redirect_stderr()
             err_reader = @async read(err_rd, String)
 
-            if haslogging()
-                # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-                logstate = Base.CoreLogging._global_logstate
-                logger = logstate.logger
-                if logger.stream == original_stderr
-                    new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-                end
+            # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
+            logstate = Base.CoreLogging._global_logstate
+            logger = logstate.logger
+            if logger.stream == original_stderr
+                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
+                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
         end
 
@@ -181,10 +168,8 @@ macro capture_err(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if haslogging()
-                    if logger.stream == stderr
-                        Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                    end
+                if logger.stream == stderr
+                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
         end
@@ -216,8 +201,12 @@ macro color_output(enabled::Bool, block)
     quote
         prev_color = Base.have_color
         Core.eval(Base, :(have_color = $$enabled))
-        retval = $(esc(block))
-        Core.eval(Base, Expr(:(=), :have_color, prev_color))
+        local retval
+        try
+            retval = $(esc(block))
+        finally
+            Core.eval(Base, Expr(:(=), :have_color, prev_color))
+        end
 
         retval
     end
