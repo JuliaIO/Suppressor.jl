@@ -1,8 +1,6 @@
+using Base: @info, printstyled, stderr, stdout
 using Suppressor
-using Compat.Test: @testset, @test, @test_throws
-using Compat: stderr, stdout
-using Compat: @info
-using Compat: printstyled
+using Test: @testset, @test, @test_throws
 
 @testset "Suppressor" begin
 
