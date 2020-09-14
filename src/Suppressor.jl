@@ -1,71 +1,38 @@
 __precompile__()
 
 module Suppressor
+using Logging
 
 export @suppress, @suppress_out, @suppress_err
 export @capture, @capture_out, @capture_err
 export @color_output
 
 """
-    @suppress expr
+   jl_not_compiling()
 
-Suppress the `stdout` and `stderr` streams for the given expression.
+Check if julia is not in one of its compilation stages set by one of the 
+flags "--output-bc", "--output-unopt-bc", "--output-o",	"--output-asm",	 "--output-ji",	 "--output-incremental",
+where it would output some transformed version of the code instead of executing it.
 """
-macro suppress(block)
-    quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
-            original_stdout = stdout
-            out_rd, out_wr = redirect_stdout()
-            out_reader = @async read(out_rd, String)
+jl_not_compiling()=ccall(:jl_generating_output, Cint, ())==0
 
-            original_stderr = stderr
-            err_rd, err_wr = redirect_stderr()
-            err_reader = @async read(err_rd, String)
-
-            # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            logstate = Base.CoreLogging._global_logstate
-            logger = logstate.logger
-            if logger.stream == original_stderr
-                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-            end
-        end
-
-        try
-            $(esc(block))
-        finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
-                redirect_stdout(original_stdout)
-                close(out_wr)
-
-                redirect_stderr(original_stderr)
-                close(err_wr)
-
-                if logger.stream == stderr
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                end
-            end
-        end
-    end
-end
 
 """
-    @suppress_out expr
+    @suppress_out block
 
-Suppress the `stdout` stream for the given expression.
+Suppress the `stdout` stream for the given blockession.
 """
 macro suppress_out(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             original_stdout = stdout
             out_rd, out_wr = redirect_stdout()
             out_reader = @async read(out_rd, String)
         end
-
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if jl_not_compiling()
                 redirect_stdout(original_stdout)
                 close(out_wr)
             end
@@ -74,36 +41,56 @@ macro suppress_out(block)
 end
 
 """
-    @suppress_err expr
+    @suppress_err block
 
-Suppress the `stderr` stream for the given expression.
+Suppress the `stderr` stream for the given blockession.
 """
 macro suppress_err(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             original_stderr = stderr
             err_rd, err_wr = redirect_stderr()
             err_reader = @async read(err_rd, String)
-
-            # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            logstate = Base.CoreLogging._global_logstate
-            logger = logstate.logger
-            if logger.stream == original_stderr
-                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-            end
+            logger=NullLogger()
+        else
+            logger=current_logger()
         end
-
         try
-            $(esc(block))
+	    with_logger(logger) do	
+                $(esc(block))
+            end
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if jl_not_compiling()
                 redirect_stderr(original_stderr)
                 close(err_wr)
+            end
+        end
+    end
+end
 
-                if logger.stream == stderr
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                end
+"""
+    @suppress block
+
+   Suppress the `stdout` and `stderr` streams for the given blockession.
+    """
+macro suppress(block)
+    quote
+        if jl_not_compiling()
+            original_stdout = stdout
+            out_rd, out_wr = redirect_stdout()
+            reader = @async read(out_rd)
+            logger=NullLogger()
+        else
+            logger=current_logger()
+        end
+        try
+	    with_logger(logger) do	
+	        redirect_stderr(()->$(esc(block)),stdout)
+	    end
+        finally
+            if jl_not_compiling()
+	        redirect_stdout(original_stdout)
+                close(out_wr)
             end
         end
     end
@@ -111,28 +98,26 @@ end
 
 
 """
-    @capture_out expr
+    @capture_out block
 
-Capture the `stdout` stream for the given expression.
+Capture the `stdout` stream for the given blockession.
 """
 macro capture_out(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             original_stdout = stdout
             out_rd, out_wr = redirect_stdout()
             out_reader = @async read(out_rd, String)
         end
-
         try
             $(esc(block))
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if jl_not_compiling()
                 redirect_stdout(original_stdout)
                 close(out_wr)
             end
         end
-
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             fetch(out_reader)
         else
             ""
@@ -141,40 +126,30 @@ macro capture_out(block)
 end
 
 """
-    @capture_err expr
-
-Capture the `stderr` stream for the given expression.
+     @capture_err block
+     Capture the `stderr` stream for the given blockession.
 """
 macro capture_err(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             original_stderr = stderr
             err_rd, err_wr = redirect_stderr()
             err_reader = @async read(err_rd, String)
-
-            # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            logstate = Base.CoreLogging._global_logstate
-            logger = logstate.logger
-            if logger.stream == original_stderr
-                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-            end
+            logger=ConsoleLogger(stderr)
+        else
+            logger=current_logger()
         end
-
         try
-            $(esc(block))
+	    with_logger(logger) do	
+                $(esc(block))
+            end
         finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
+            if jl_not_compiling()
                 redirect_stderr(original_stderr)
                 close(err_wr)
-
-                if logger.stream == stderr
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                end
             end
         end
-
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             fetch(err_reader)
         else
             ""
@@ -183,62 +158,45 @@ macro capture_err(block)
 end
 
 """
-    @capture expr
+    @capture block
 
-Capture the `output` and `stderr` streams for the given expression,
-return a tuple of stdout and stderr.
+Capture the `output` and `stderr` streams for the given blockession,
+return a string containing output from both
 """
 macro capture(block)
     quote
-        if ccall(:jl_generating_output, Cint, ()) == 0
+        if jl_not_compiling()
             original_stdout = stdout
             out_rd, out_wr = redirect_stdout()
-            out_reader = @async read(out_rd, String)
-
-            original_stderr = stderr
-            err_rd, err_wr = redirect_stderr()
-            err_reader = @async read(err_rd, String)
-
-
-            
-            # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
-            logstate = Base.CoreLogging._global_logstate
-            logger = logstate.logger
-            if logger.stream == original_stderr
-                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
-                Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
-            end
-        end
-
-        try
-            $(esc(block))
-        finally
-            if ccall(:jl_generating_output, Cint, ()) == 0
-                redirect_stdout(original_stdout)
-                close(out_wr)
-
-                redirect_stderr(original_stderr)
-                close(err_wr)
-
-                if logger.stream == stderr
-                    Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
-                end
-            end
-        end
-
-        if ccall(:jl_generating_output, Cint, ()) == 0
-            (fetch(out_reader),fetch(err_reader))
+            reader = @async read(out_rd, String)
+            logger=ConsoleLogger(stdout)
         else
-            ("","")
+            logger=current_logger()
+        end
+        try
+	    with_logger(logger) do	
+	        redirect_stderr(()->$(esc(block)),stdout)
+	    end
+        finally
+            if jl_not_compiling()
+	        redirect_stdout(original_stdout)
+                close(out_wr)
+            end
+        end
+
+        if jl_not_compiling()
+            fetch(reader)
+        else
+            ""
         end
     end
 end
 
 
 """
-    @color_output enabled::Bool expr
+    @color_output enabled::Bool block
 
-Enable or disable color printing for the given expression. Often useful in
+Enable or disable color printing for the given blockession. Often useful in
 combination with the `@capture_*` macros:
 
 ## Example

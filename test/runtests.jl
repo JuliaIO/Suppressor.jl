@@ -158,4 +158,17 @@ end
     end
 end
 
+
+@testset "capture" begin
+    output = @capture begin
+        println("CAPTURED STDOUT")
+        println(stderr, "38 CAPTURED STDERR")
+    end
+    @test output == "CAPTURED STDOUT\n38 CAPTURED STDERR\n"
+    println("39 PRINTED STDOUT")
+    println("40 PRINTED STDERR")
+end
+
+
+    
 end # @testset "Suppressor"
