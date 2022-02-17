@@ -25,7 +25,7 @@ macro suppress(block)
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
             logstate = Base.CoreLogging._global_logstate
             logger = logstate.logger
-            if logger.stream == original_stderr
+            if :stream in propertynames(logger) && logger.stream == original_stderr
                 new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
                 Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
@@ -41,7 +41,7 @@ macro suppress(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if logger.stream == stderr
+                if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
@@ -88,7 +88,7 @@ macro suppress_err(block)
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
             logstate = Base.CoreLogging._global_logstate
             logger = logstate.logger
-            if logger.stream == original_stderr
+            if :stream in propertynames(logger) && logger.stream == original_stderr
                 new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
                 Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
@@ -101,7 +101,7 @@ macro suppress_err(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if logger.stream == stderr
+                if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
@@ -155,7 +155,7 @@ macro capture_err(block)
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
             logstate = Base.CoreLogging._global_logstate
             logger = logstate.logger
-            if logger.stream == original_stderr
+            if :stream in propertynames(logger) && logger.stream == original_stderr
                 new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
                 Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
             end
@@ -168,7 +168,7 @@ macro capture_err(block)
                 redirect_stderr(original_stderr)
                 close(err_wr)
 
-                if logger.stream == stderr
+                if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
