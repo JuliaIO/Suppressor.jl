@@ -42,6 +42,8 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           files: lcov.info
-      - uses: julia-actions/julia-uploadcoveralls@v1
-        env:
-          COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+      # Package used Coveralls when it used Travis CI but unfortunately I don't have access
+      # to the repo secrets to configure this.
+      # - uses: julia-actions/julia-uploadcoveralls@v1
+      #   env:
+      #     COVERALLS_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
