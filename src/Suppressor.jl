@@ -33,6 +33,7 @@ macro suppress(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio() # flush the buffers from libc
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
@@ -64,6 +65,7 @@ macro suppress_out(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
@@ -96,6 +98,7 @@ macro suppress_err(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
@@ -125,6 +128,7 @@ macro capture_out(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
@@ -163,6 +167,7 @@ macro capture_err(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
@@ -204,6 +209,7 @@ macro color_output(enabled::Bool, block)
         local retval
         try
             retval = $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             Core.eval(Base, Expr(:(=), :have_color, prev_color))
         end
