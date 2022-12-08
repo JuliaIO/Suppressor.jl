@@ -37,7 +37,7 @@ macro suppress(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
 
                 redirect_stderr(original_stderr)
                 close(err_wr)
@@ -68,7 +68,7 @@ macro suppress_out(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
             end
         end
     end
@@ -100,7 +100,7 @@ macro suppress_err(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
-                close(err_wr)
+                flush(err_wr)
 
                 if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
@@ -129,7 +129,7 @@ macro capture_out(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
             end
         end
 
@@ -172,7 +172,7 @@ macro capture_err(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
-                close(err_wr)
+                flush(err_wr)
 
                 if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
