@@ -157,14 +157,16 @@ macro capture_err(block)
             logstate = Base.CoreLogging._global_logstate
             logger = logstate.logger
             if :stream in propertynames(logger) && logger.stream == original_stderr
-                logger = typeof(logger)(err_wr, logger.min_level)
-                new_logstate = Base.CoreLogging.LogState(logger)
+                _logger = typeof(logger)(err_wr, logger.min_level)
+                new_logstate = Base.CoreLogging.LogState(_logger)
                 Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
+            else
+                _logger = logger
             end
         end
 
         try
-            Logging.with_logger(logger) do
+            Logging.with_logger(_logger) do
                 $(esc(block))
             end
         finally
