@@ -2,6 +2,7 @@ __precompile__()
 
 module Suppressor
 
+using Logging
 export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
 export @color_output
@@ -156,13 +157,18 @@ macro capture_err(block)
             logstate = Base.CoreLogging._global_logstate
             logger = logstate.logger
             if :stream in propertynames(logger) && logger.stream == original_stderr
-                new_logstate = Base.CoreLogging.LogState(typeof(logger)(err_wr, logger.min_level))
+                _logger = typeof(logger)(err_wr, logger.min_level)
+                new_logstate = Base.CoreLogging.LogState(_logger)
                 Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), new_logstate))
+            else
+                _logger = logger
             end
         end
 
         try
-            $(esc(block))
+            Logging.with_logger(_logger) do
+                $(esc(block))
+            end
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)

@@ -1,4 +1,5 @@
 using Base: @info, printstyled, stderr, stdout
+using Logging: ConsoleLogger, with_logger
 using Suppressor
 using Test: @testset, @test, @test_throws
 
@@ -156,6 +157,15 @@ end
         printstyled("36 PRINTED GREEN STDOUT\n", color=:green)
         printstyled("37 PRINTED GREEN STDERR\n", color=:green)
     end
+end
+
+@testset "capture_err within with_logger" begin
+    out = with_logger(ConsoleLogger(stderr)) do;
+        @capture_err begin
+            @error "@error"
+        end
+    end
+    @test startswith(out, "┌ Error: @error")
 end
 
 end # @testset "Suppressor"
