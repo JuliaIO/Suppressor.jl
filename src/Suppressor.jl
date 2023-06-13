@@ -37,7 +37,7 @@ macro suppress(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
 
                 redirect_stderr(original_stderr)
                 close(err_wr)
@@ -68,7 +68,7 @@ macro suppress_out(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
             end
         end
     end
@@ -100,13 +100,28 @@ macro suppress_err(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
-                close(err_wr)
+                flush(err_wr)
 
                 if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
                 end
             end
         end
+    end
+end
+
+function _safe_write_ignore_close_task(out_io, in_io)
+    try
+        write(out_io, in_io)
+    catch
+        # Swallow this exception so the task fails gracefully.
+        # HACK:
+        # Now, create a new sticky task to force the Thread to forget about
+        # this task, which would otherwise keep the IOs alive, since they're
+        # captured in the lambda this task was created with.
+        # (This should really be fixed in the scheduler. See:
+        # https://github.com/JuliaLang/julia/issues/40626)
+        @async nothing
     end
 end
 
@@ -121,7 +136,8 @@ macro capture_out(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             original_stdout = stdout
             out_rd, out_wr = redirect_stdout()
-            out_reader = @async read(out_rd, String)
+            io_buf = IOBuffer()
+            out_reader = @async _safe_write_ignore_close_task(io_buf, out_rd)
         end
 
         try
@@ -129,12 +145,15 @@ macro capture_out(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
-                close(out_wr)
+                flush(out_wr)
             end
         end
 
         if ccall(:jl_generating_output, Cint, ()) == 0
-            fetch(out_reader)
+            s = String(take!(io_buf))
+            # Now close the task to allow the Pipe() to be GC'd
+            close(io_buf)
+            s
         else
             ""
         end
@@ -151,7 +170,8 @@ macro capture_err(block)
         if ccall(:jl_generating_output, Cint, ()) == 0
             original_stderr = stderr
             err_rd, err_wr = redirect_stderr()
-            err_reader = @async read(err_rd, String)
+            io_buf = IOBuffer()
+            err_reader = @async _safe_write_ignore_close_task(io_buf, err_rd)
 
             # approach adapted from https://github.com/JuliaLang/IJulia.jl/pull/667/files
             logstate = Base.CoreLogging._global_logstate
@@ -172,7 +192,7 @@ macro capture_err(block)
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
-                close(err_wr)
+                flush(err_wr)
 
                 if :stream in propertynames(logger) && logger.stream == stderr
                     Core.eval(Base.CoreLogging, Expr(:(=), :(_global_logstate), logstate))
@@ -181,7 +201,10 @@ macro capture_err(block)
         end
 
         if ccall(:jl_generating_output, Cint, ()) == 0
-            fetch(err_reader)
+            s = String(take!(io_buf))
+            # Now close the task to allow the Pipe() to be GC'd
+            close(io_buf)
+            s
         else
             ""
         end
