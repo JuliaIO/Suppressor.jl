@@ -168,4 +168,32 @@ end
     @test startswith(out, "┌ Error: @error")
 end
 
+@testset "suppress_err within with_logger" begin
+    mktemp() do path, io
+        redirect_stderr(io) do
+            with_logger(ConsoleLogger(stderr)) do
+                @suppress_err begin
+                    @error "@error"
+                end
+            end
+        end
+        flush(io)
+        @test read(path, String) == ""
+    end
+end
+
+@testset "suppress within with_logger" begin
+    mktemp() do path, io
+        redirect_stderr(io) do
+            with_logger(ConsoleLogger(stderr)) do
+                @suppress begin
+                    @error "@error"
+                end
+            end
+        end
+        flush(io)
+        @test read(path, String) == ""
+    end
+end
+
 end # @testset "Suppressor"
