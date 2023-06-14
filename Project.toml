@@ -1,6 +1,6 @@
 name = "Suppressor"
 uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
