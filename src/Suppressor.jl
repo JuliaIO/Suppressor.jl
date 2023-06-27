@@ -33,6 +33,8 @@ macro suppress(block)
             else
                 _logger = logger
             end
+        else
+            _logger = current_logger()
         end
 
         try
@@ -101,6 +103,8 @@ macro suppress_err(block)
             else
                 _logger = logger
             end
+        else
+            _logger = current_logger()
         end
 
         try
@@ -173,6 +177,8 @@ macro capture_err(block)
             else
                 _logger = logger
             end
+        else
+            _logger = current_logger()
         end
 
         try
