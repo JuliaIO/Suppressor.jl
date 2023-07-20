@@ -3,6 +3,8 @@ using Logging: ConsoleLogger, with_logger
 using Suppressor
 using Test: @testset, @test, @test_throws
 
+module TestModule end
+
 @testset "Suppressor" begin
 
 # everything that prints to stdout and stderr should be prefixed with an
@@ -195,5 +197,13 @@ end
         @test read(path, String) == ""
     end
 end
+
+# https://github.com/JuliaIO/Suppressor.jl/issues/57
+@test try @capture_err using .TestModule; true finally; end;
+@test try @capture_out using .TestModule; true finally; end;
+@test try @suppress using .TestModule; true finally; end;
+@test try @suppress_err using .TestModule; true finally; end;
+@test try @suppress_out using .TestModule; true finally; end;
+
 
 end # @testset "Suppressor"
