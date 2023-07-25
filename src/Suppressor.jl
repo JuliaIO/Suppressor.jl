@@ -37,7 +37,8 @@ macro suppress(block)
             _logger = current_logger()
         end
 
-        # Spelling out `with_logger(f, ...)` as a try/finally so we can do `@suppress using SpammyPkg`
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
         t = current_task()
         old_logstate = t.logstate
         try
@@ -110,7 +111,8 @@ macro suppress_err(block)
             _logger = current_logger()
         end
 
-        # Spelling out `with_logger(f, ...)` as a try/finally so we can do `@suppress_err using SpammyPkg`
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
         t = current_task()
         old_logstate = t.logstate
         try
@@ -187,7 +189,8 @@ macro capture_err(block)
             _logger = current_logger()
         end
 
-        # Spelling out `with_logger(f, ...)` as a try/finally so we can do `@capture_err using SpammyPkg`
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
         t = current_task()
         old_logstate = t.logstate
         try
