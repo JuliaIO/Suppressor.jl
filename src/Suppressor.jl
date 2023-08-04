@@ -37,11 +37,15 @@ macro suppress(block)
             _logger = current_logger()
         end
 
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
+        t = current_task()
+        old_logstate = t.logstate
         try
-            Logging.with_logger(_logger) do
-                $(esc(block))
-            end
+            t.logstate = Base.CoreLogging.LogState(_logger)
+            $(esc(block))
         finally
+            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
                 close(out_wr)
@@ -107,11 +111,15 @@ macro suppress_err(block)
             _logger = current_logger()
         end
 
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
+        t = current_task()
+        old_logstate = t.logstate
         try
-            Logging.with_logger(_logger) do
-                $(esc(block))
-            end
+            t.logstate = Base.CoreLogging.LogState(_logger)
+            $(esc(block))
         finally
+            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
                 close(err_wr)
@@ -181,11 +189,15 @@ macro capture_err(block)
             _logger = current_logger()
         end
 
+        # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
+        # can still do `@suppress using Foo`).
+        t = current_task()
+        old_logstate = t.logstate
         try
-            Logging.with_logger(_logger) do
-                $(esc(block))
-            end
+            t.logstate = Base.CoreLogging.LogState(_logger)
+            $(esc(block))
         finally
+            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
                 close(err_wr)
