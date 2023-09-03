@@ -44,6 +44,7 @@ macro suppress(block)
         try
             t.logstate = Base.CoreLogging.LogState(_logger)
             $(esc(block))
+            Base.Libc.flush_cstdio() # flush the buffers from libc
         finally
             t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
@@ -76,6 +77,7 @@ macro suppress_out(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
@@ -118,6 +120,7 @@ macro suppress_err(block)
         try
             t.logstate = Base.CoreLogging.LogState(_logger)
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
@@ -148,6 +151,7 @@ macro capture_out(block)
 
         try
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
@@ -196,6 +200,7 @@ macro capture_err(block)
         try
             t.logstate = Base.CoreLogging.LogState(_logger)
             $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
@@ -238,6 +243,7 @@ macro color_output(enabled::Bool, block)
         local retval
         try
             retval = $(esc(block))
+            Base.Libc.flush_cstdio()
         finally
             Core.eval(Base, Expr(:(=), :have_color, prev_color))
         end
