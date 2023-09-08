@@ -7,6 +7,29 @@ export @suppress, @suppress_out, @suppress_err
 export @capture_out, @capture_err
 export @color_output
 
+# Suppressor directly accesses private interfaces in base
+const has_logstate = !isdefined(Base, :ScopedValues)
+
+if has_logstate
+    macro with_logstate(logstate, expr)
+        ct = gensym(:ct)
+        current_logstate = gensym(:current_logstate)
+        body = Expr(:tryfinally, esc(expr), :($(ct).logstate = $(current_logstate)))
+        quote
+            $(ct) = $(Base.current_task)()
+            $(current_logstate) = $(ct).logstate
+            $(ct).logstate = $(esc(logstate))
+            $body
+        end
+    end
+else
+    macro with_logstate(logstate, expr)
+        quote
+            @with($(Base.CoreLogging.CURRENT_LOGSTATE) => $(esc(logstate)), $(esc(expr)))
+        end
+    end
+end
+
 """
     @suppress expr
 
@@ -39,13 +62,9 @@ macro suppress(block)
 
         # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
         # can still do `@suppress using Foo`).
-        t = current_task()
-        old_logstate = t.logstate
         try
-            t.logstate = Base.CoreLogging.LogState(_logger)
-            $(esc(block))
+            @with_logstate(Base.CoreLogging.LogState(_logger), $(esc(block)))
         finally
-            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
                 close(out_wr)
@@ -113,13 +132,9 @@ macro suppress_err(block)
 
         # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
         # can still do `@suppress using Foo`).
-        t = current_task()
-        old_logstate = t.logstate
         try
-            t.logstate = Base.CoreLogging.LogState(_logger)
-            $(esc(block))
+            @with_logstate Base.CoreLogging.LogState(_logger) $(esc(block))
         finally
-            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
                 close(err_wr)
@@ -191,13 +206,9 @@ macro capture_err(block)
 
         # Spelling out `with_logger(f, ...)` as a try/finally so when we are at top-level we
         # can still do `@suppress using Foo`).
-        t = current_task()
-        old_logstate = t.logstate
         try
-            t.logstate = Base.CoreLogging.LogState(_logger)
-            $(esc(block))
+            @with_logstate Base.CoreLogging.LogState(_logger) $(esc(block))
         finally
-            t.logstate = old_logstate
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stderr(original_stderr)
                 close(err_wr)
