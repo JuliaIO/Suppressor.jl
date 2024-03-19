@@ -25,7 +25,7 @@ if has_logstate
 else
     macro with_logstate(logstate, expr)
         quote
-            Base.@with($(Base.CoreLogging.CURRENT_LOGSTATE) => $(esc(logstate)), $(esc(expr)))
+            Base.ScopedValues.@with($(Base.CoreLogging.CURRENT_LOGSTATE) => $(esc(logstate)), $(esc(expr)))
         end
     end
 end
