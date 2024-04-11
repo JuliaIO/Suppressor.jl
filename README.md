@@ -88,10 +88,11 @@ end
 
 ### Variable Scope
 
-The macros in Suppressor.jl need to wrap the given expression in a `try...finally` block to make sure that everything is cleaned up correctly. This means that any variables introduced within the macro expression aren't in-scope afterwards. To work around this you can use `local` to introduce the variable before the block, for example:
+The macros in Suppressor.jl need to wrap the given expression in a `try...finally` block to make sure that everything is cleaned up correctly. This means that any variables introduced within the macro expression aren't in-scope afterwards. To work around this you can initialize the variable first before the suppression block, for example:
 
 ```julia
-local x
-output = @capture_out x = loudfunction()
+x = 2.0
+# output = @capture_out x = loudfunction()
+output = @capture_out x = sin(2.)
 println(x) # x is available here
 ```
