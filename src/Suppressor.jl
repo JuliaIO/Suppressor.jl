@@ -64,6 +64,9 @@ macro suppress(block)
         # can still do `@suppress using Foo`).
         try
             @with_logstate(Base.CoreLogging.LogState(_logger), $(esc(block)))
+            for v in [:($key = $value) for (key,value) in Base.@locals]
+                Base.eval($__module__, v)
+            end
         finally
             if ccall(:jl_generating_output, Cint, ()) == 0
                 redirect_stdout(original_stdout)
